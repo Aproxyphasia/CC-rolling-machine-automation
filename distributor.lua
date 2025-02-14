@@ -300,15 +300,7 @@ while true do
         )
         if recipeName then
             local layout = recipesData.layouts[recipeName]
-            -- decrementation test
-            local foundItemLink = capturedBuffer:seekItem(layout[1])
-            assert(foundItemLink ~= nil, "Check seek method, it's broken!")
-            for step = 1, foundItemLink.item.count do
-                print(textutils.serialise(capturedBuffer.bufferData.items))
-                foundItemLink:decrement()
-            end
-            print("Final print")
-            print(textutils.serialise(capturedBuffer.bufferData.items))
+            
         end
     end
 end
