@@ -307,6 +307,7 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
             assert(transfered ~= 0, "Can't transfer item"..bufferItemLink.item.rawName)
             bufferItemLink:decrement()
         end
+        return definedMachineSlots
     end
 end
 
@@ -320,7 +321,6 @@ while true do
         )
         if recipeName then
             local layout = recipesData.layouts[recipeName]
-        
         end
     end
 end
