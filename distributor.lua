@@ -321,6 +321,10 @@ while true do
         )
         if recipeName then
             local layout = recipesData.layouts[recipeName]
+            local definedSlots = rollingMachineManager:loadSlotManagers(layout)
+            for _, slotManager in pairs(definedSlots) do
+                slotManager:receive(capturedBuffer)
+            end
         end
     end
 end
