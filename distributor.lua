@@ -168,7 +168,7 @@ local function fetchBufferData(bufferReference)
     local bufferRawContent = bufferReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
-    
+
     for slot, item in pairs(bufferRawContent) do
         local item = bufferReference.getItem(slot)
         local rawName = item.getMetadata().rawName
@@ -210,10 +210,10 @@ local function isStorageCapableEmpty(storageReference)
     return getTableLength(storageReference.list()) == 0
 end
 
-local ecoSleepDuration = 10 -- seconds
+local ecoSleepDuration = 10         -- seconds
 local intermediateSleepDuration = 1 -- seconds
 local intermediateSleepAttempts = 5 -- attempts
-local workingSleepDuration = 0.5 -- seconds
+local workingSleepDuration = 0.5    -- seconds
 
 local sleepManager = {
     ecoModeCounter = 0,
@@ -242,7 +242,8 @@ function sleepManager:sleep()
             os.sleep(ecoSleepDuration)
         else
             self:decrementEcoCounter()
-            print("Intermediate sleep. Counter: " .. self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
+            print("Intermediate sleep. Counter: " ..
+            self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
             os.sleep(intermediateSleepDuration)
         end
     else
@@ -253,13 +254,62 @@ function sleepManager:sleep()
     return self.isActive
 end
 
+local capturingBufferManager = {
+    bufferReference = devices.buffer.ref,
+    bufferSide = devices.buffer.side,
+}
+function capturingBufferManager:capture()
+    local capturedBufferManager = {
+        bufferSide = devices.buffer.side,
+        bufferData = fetchBufferData(self.bufferReference)
+    }
+    function capturedBufferManager:seekItem(rawName)
+        local items = self.bufferData.items
+        for bufferSlot, itemData in pairs(items) do
+            if itemData.rawName == rawName then
+                local referencedItem = {
+                    rawName = itemData.rawName,
+                    count = itemData.count,
+                }
+                function referencedItem:decrement()
+                    self.count = self.count - 1
+                    if self.count == 0 then
+                        items[bufferSlot] = nil
+                    end
+                end
 
+                return referencedItem
+            end
+        end
+        return nil
+    end
+
+    return capturedBufferManager
+end
+
+local rollingMachineManager = {
+    machineReference = devices.rollingMachine.ref,
+}
 
 while true do
     local isWorking = sleepManager:sleep()
     if isWorking then
-        local bufferData = fetchBufferData(devices.buffer.ref)
-        
+        local capturedBuffer = capturingBufferManager:capture()
+        local recipeName = fetchSuitableRecipeName(
+            recipesData.quantities,
+            capturedBuffer.bufferData.quantities
+        )
+        if recipeName then
+            local layout = recipesData.layouts[recipeName]
+            -- decrementation test
+            local foundItem = capturedBuffer:seekItem(layout[1])
+            assert(foundItem ~= nil, "Check seek method, it's broken!")
+            for step = 1, foundItem.count do
+                print(capturedBuffer.bufferData.items)
+                foundItem:decrement()
+            end
+            print("Final print")
+            print(capturedBuffer.bufferData.items)
+        end
     end
 end
-
