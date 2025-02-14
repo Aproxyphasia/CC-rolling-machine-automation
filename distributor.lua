@@ -1,3 +1,5 @@
+LOGGING = true
+
 io.write("Fetching peripherals... ")
 local peripherals = peripheral.getNames()
 print("Fetched!")
@@ -47,7 +49,7 @@ local recipesData = {
 }
 
 print("[ RecipeLoader ] Stage started")
-io.write("[ RecipeLoader ] [ "..recipesFile.." ] Seearching ")
+io.write("[ RecipeLoader ] [ " .. recipesFile .. " ] Seearching ")
 if fs.exists(recipesFile) then
     io.write("> Found > Opening ")
     local file = fs.open(recipesFile, "r")
@@ -72,7 +74,7 @@ end
 -- Process recipesLayouts to gather requirements
 print("[ RecipeLoader ] Generating requirements for recipes")
 for name, layout in pairs(recipesData.layouts) do
-    io.write("[ RecipeLoader ] [ Recipe: "..name.." ] Calculating... ")
+    io.write("[ RecipeLoader ] [ Recipe: " .. name .. " ] Calculating... ")
     local requirements = {}
     for _, rawName in pairs(layout) do
         if rawName then
@@ -286,31 +288,65 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     end
     return definedMachineSlots
 end
+
 print("Done!")
 
 print("[ Main ] Stage completed")
 
 print("[ Main ] Entering main loop")
 while true do
+    _ = LOGGING and print("[ LOG ] [ MainLoop ] Iteration started... ")
+    _ = LOGGING and print("[ LOG ] [ MainLoop ] Checking buffer... ")
     local isEmpty = isStorageCapableEmpty(devices.buffer.ref)
+    _ = LOGGING and print("[ LOG ] [ MainLoop ] Buffer is " .. (not isEmpty and "not " or "") .. "empty.")
+
     local isRecipeMatched = false
     if not isEmpty then
+        _ = LOGGING and print("[ LOG ] [ MainLoop ] Capturing buffer... ")
         local capturedBuffer = capturingBufferManager:capture()
+        _ = LOGGING and print("[ LOG ] [ MainLoop ] Buffer captured.")
+
+        _ = LOGGING and print("[ LOG ] [ MainLoop ] Fetching suitable recipe... ")
         local recipeName = fetchSuitableRecipeName(
             recipesData.quantities,
             capturedBuffer.bufferData.quantities
         )
+        _ = LOGGING and print("[ LOG ] [ MainLoop ] Suitable recipe is " .. (recipeName or "not found") .. ".")
+
         if recipeName then
+            local _sameRecipe = function()
+                _ = LOGGING and
+                print("[ LOG ] [ MainLoop ] Recipe is the same as previous: loading without interruption")
+            end
+            local _waitingForEmpty = function()
+                _ = LOGGING and
+                print("[ LOG ] [ MainLoop ] Recipe is different from previous: waiting for the machine to be empty")
+            end
             if rollingMachineManager.previousRecipe == recipeName or isStorageCapableEmpty(devices.rollingMachine.ref) then
+                if LOGGING and rollingMachineManager.previousRecipe ~= recipeName then
+                    _waitingForEmpty()
+                else
+                    _sameRecipe()
+                end
+
+                _ = LOGGING and print("[ LOG ] [ MainLoop ] Loading \""..recipeName.."\" layout...")
                 local layout = recipesData.layouts[recipeName]
+
+                _ = LOGGING and print("[ LOG ] [ MainLoop ] Loading slot managers...")
                 local definedSlots = rollingMachineManager:loadSlotManagers(layout)
-                for _, slotManager in pairs(definedSlots) do
+                for slot, slotManager in pairs(definedSlots) do
+                    _ = LOGGING and print("[ LOG ] [ MainLoop ] Receiving item \""..slotManager.itemData.rawName.."\" to slot "..slot)
                     slotManager:receive(capturedBuffer)
                 end
+                _ = LOGGING and print("[ LOG ] [ MainLoop ] Recipe loaded.")
             end
             isRecipeMatched = true
         end
     end
+
+    _ = LOGGING and print("[ LOG ] [ MainLoop ] Updating sleep manager...")
     sleepManager:updateBufferState(isEmpty, isRecipeMatched)
+
+    _ = LOGGING and print("[ LOG ] [ MainLoop ] Sleeping...")
     sleepManager:sleep()
 end
