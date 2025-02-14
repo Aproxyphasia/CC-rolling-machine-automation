@@ -1,17 +1,17 @@
 -- TODO: Improve speed. Capturing buffer takes too much time
 
-LOGGING = false
-ECHO = false
+LOGGING = true
+INITIALLOGGING = false
 
-_ = ECHO and io.write("Fetching peripherals... ")
+_ = INITIALLOGGING and io.write("Fetching peripherals... ")
 local peripherals = peripheral.getNames()
-_ = ECHO and print("Fetched!")
+_ = INITIALLOGGING and print("Fetched!")
 
 local rollingMachineID = "techreborn:rolling_machine"
-_ = ECHO and print("Rolling Machine ID is set to: " .. rollingMachineID)
+_ = INITIALLOGGING and print("Rolling Machine ID is set to: " .. rollingMachineID)
 
 local bufferID = "minecraft:chest"
-_ = ECHO and print("Buffer ID is set to: " .. bufferID)
+_ = INITIALLOGGING and print("Buffer ID is set to: " .. bufferID)
 
 local devices = {
     rollingMachine = {
@@ -24,14 +24,14 @@ local devices = {
     }
 }
 
-_ = ECHO and print("[ DeviceDefinition ] Stage started")
+_ = INITIALLOGGING and print("[ DeviceDefinition ] Stage started")
 for _, name in ipairs(peripherals) do
     if peripheral.getType(name) == rollingMachineID then
-        _ = ECHO and print("[ DeviceDefinition ] [ SUCCESS ]: Tech Reborn Rolling Machine found on the " .. name .. " side.")
+        _ = INITIALLOGGING and print("[ DeviceDefinition ] [ SUCCESS ]: Tech Reborn Rolling Machine found on the " .. name .. " side.")
         devices.rollingMachine.side = name
         devices.rollingMachine.ref = peripheral.wrap(name)
     elseif peripheral.getType(name) == bufferID then
-        _ = ECHO and print("[ DeviceDefinition ] [ SUCCESS ]: Buffer found on the " .. name .. " side.")
+        _ = INITIALLOGGING and print("[ DeviceDefinition ] [ SUCCESS ]: Buffer found on the " .. name .. " side.")
         devices.buffer.side = name
         devices.buffer.ref = peripheral.wrap(name)
     end
@@ -42,7 +42,7 @@ for deviceName, device in pairs(devices) do
         error("[ DeviceDefinition ] [ ERROR ]: " .. deviceName .. " is not found.")
     end
 end
-_ = ECHO and print("[ DeviceDefinition ] Stage completed")
+_ = INITIALLOGGING and print("[ DeviceDefinition ] Stage completed")
 
 -- Load recipesLayouts from file
 local recipesFile = "recipes.json"
@@ -51,59 +51,63 @@ local recipesData = {
     quantities = {}
 }
 
-_ = ECHO and print("[ RecipeLoader ] Stage started")
-_ = ECHO and io.write("[ RecipeLoader ] [ " .. recipesFile .. " ] Searching ")
+_ = INITIALLOGGING and print("[ RecipeLoader ] Stage started")
+_ = INITIALLOGGING and io.write("[ RecipeLoader ] [ " .. recipesFile .. " ] Searching ")
 if fs.exists(recipesFile) then
-    _ = ECHO and io.write("> Found > Opening ")
+    _ = INITIALLOGGING and io.write("> Found > Opening ")
     local file = fs.open(recipesFile, "r")
 
-    _ = ECHO and io.write("> Reading & Serializing layouts ")
+    _ = INITIALLOGGING and io.write("> Reading & Serializing layouts ")
     recipesData.layouts = textutils.unserialize(file.readAll())
 
-    _ = ECHO and print("> Closing")
+    _ = INITIALLOGGING and print("> Closing")
     file.close()
 else
-    _ = ECHO and io.write("> Not Found > Creating ")
+    _ = INITIALLOGGING and io.write("> Not Found > Creating ")
     local file = fs.open(recipesFile, "w")
 
-    _ = ECHO and io.write("> Writing ")
+    _ = INITIALLOGGING and io.write("> Writing ")
     file.write(textutils.serialize(recipesData.layouts))
 
-    _ = ECHO and print("> Closing")
+    _ = INITIALLOGGING and print("> Closing")
     file.close()
 end
 
 
 -- Process recipesLayouts to gather requirements
-_ = ECHO and print("[ RecipeLoader ] Generating requirements for recipes")
+_ = INITIALLOGGING and print("[ RecipeLoader ] Generating requirements for recipes")
 for name, layout in pairs(recipesData.layouts) do
-    _ = ECHO and io.write("[ RecipeLoader ] [ Recipe: " .. name .. " ] Calculating... ")
+    _ = INITIALLOGGING and io.write("[ RecipeLoader ] [ Recipe: " .. name .. " ] Calculating... ")
     local requirements = {}
     for _, rawName in pairs(layout) do
         if rawName then
             requirements[rawName] = (requirements[rawName] or 0) + 1
         end
     end
-    _ = ECHO and print("Done!")
+    _ = INITIALLOGGING and print("Done!")
     recipesData.quantities[name] = requirements
 end
 
-_ = ECHO and print("[ RecipeLoader ] Stage completed")
+_ = INITIALLOGGING and print("[ RecipeLoader ] Stage completed")
 
 -- Check the chest for its content
 local function fetchBufferData(bufferReference)
+    _ = LOGGING and print("[ LOG ] [ BufferData ] Fetching buffer data...")
     local bufferRawContent = bufferReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
 
     for slot, item in pairs(bufferRawContent) do
+        _ = LOGGING and print("[ LOG ] [ BufferData ] Fetching item from slot " .. slot)
         local item = bufferReference.getItem(slot)
         local rawName = item.getMetadata().rawName
         local count = item.getMetadata().count
         bufferItems[slot] = { count = count, rawName = rawName }
         bufferQuantities[rawName] = (bufferQuantities[rawName] or 0) + count
+        _ = LOGGING and print("[ LOG ] [ BufferData ] Item: " .. rawName .. ", Count: " .. count)
     end
 
+    _ = LOGGING and print("[ LOG ] [ BufferData ] Buffer data fetched.")
     return { items = bufferItems, quantities = bufferQuantities }
 end
 
@@ -137,7 +141,7 @@ local function isStorageCapableEmpty(storageReference)
     return getTableLength(storageReference.list()) == 0
 end
 
-_ = ECHO and print("[ Main ] Stage started")
+_ = INITIALLOGGING and print("[ Main ] Stage started")
 -- Sleep manager
 
 local ecoSleepDuration = 10            -- seconds
@@ -146,9 +150,9 @@ local inertStateAttempts = 20           -- attempts
 local workingSleepDuration = 0.1     -- seconds
 local betweenStateSleepDuration = 0.75 -- seconds
 local betweenStateAttempts = 10        -- attempts
-_ = ECHO and print("[ Main ] Initialized sleep manager constants")
+_ = INITIALLOGGING and print("[ Main ] Initialized sleep manager constants")
 
-_ = ECHO and io.write("[ Main ] Initializing sleep manager... ")
+_ = INITIALLOGGING and io.write("[ Main ] Initializing sleep manager... ")
 local sleepManager = {
     inertModeCounter = 0,
     betweenstateModeCounter = 0,
@@ -193,23 +197,23 @@ function sleepManager:sleep()
     local isRecipeMatched = self.observableStates.isRecipeMatched
     if not isEmpty and self.betweenstateModeCounter > 0 then
         if isRecipeMatched then
-            _ = ECHO and print("State: Working")
+            _ = INITIALLOGGING and print("State: Working")
             os.sleep(workingSleepDuration)
             if self.betweenstateModeCounter <= 0 then
                 self:rechargeBetweenState()
             end
         elseif self:betweenStateCountdown() then
-            _ = ECHO and print("State: Between State")
+            _ = INITIALLOGGING and print("State: Between State")
             os.sleep(betweenStateSleepDuration)
         end
         if self.inertModeCounter <= 0 then
             self:rechargeInertState()
         end
     elseif self:inertStateCountdown() then
-        _ = ECHO and print("State: Inert State")
+        _ = INITIALLOGGING and print("State: Inert State")
         os.sleep(inertStateSleepDuration)
     else
-        _ = ECHO and print("State: Eco Mode")
+        _ = INITIALLOGGING and print("State: Eco Mode")
         os.sleep(ecoSleepDuration)
         if isRecipeMatched then
             self:rechargeBetweenState()
@@ -219,10 +223,10 @@ end
 
 sleepManager:rechargeInertState()
 sleepManager:rechargeBetweenState()
-_ = ECHO and print("Done!")
+_ = INITIALLOGGING and print("Done!")
 
 
-_ = ECHO and io.write("[ Main ] Initializing capturing buffer manager... ")
+_ = INITIALLOGGING and io.write("[ Main ] Initializing capturing buffer manager... ")
 local capturingBufferManager = {
     bufferReference = devices.buffer.ref,
     bufferSide = devices.buffer.side,
@@ -265,9 +269,9 @@ local function devicePullItems(deviceReference, fromSide, fromSlot, count, toSlo
     assert(toSlot, "Error: Destination slot is nil.")
     return deviceReference.pullItems(fromSide, fromSlot, count, toSlot)
 end
-_ = ECHO and print("Done!")
+_ = INITIALLOGGING and print("Done!")
 
-_ = ECHO and io.write("[ Main ] Initializing rolling machine manager... ")
+_ = INITIALLOGGING and io.write("[ Main ] Initializing rolling machine manager... ")
 local rollingMachineManager = {
     machineReference = devices.rollingMachine.ref,
     previousRecipe = nil,
@@ -293,11 +297,11 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     return definedMachineSlots
 end
 
-_ = ECHO and print("Done!")
+_ = INITIALLOGGING and print("Done!")
 
-_ = ECHO and print("[ Main ] Stage completed")
+_ = INITIALLOGGING and print("[ Main ] Stage completed")
 
-_ = ECHO and print("[ Main ] Entering main loop")
+_ = INITIALLOGGING and print("[ Main ] Entering main loop")
 while true do
     _ = LOGGING and print("[ LOG ] [ MainLoop ] Iteration started... ")
     _ = LOGGING and print("[ LOG ] [ MainLoop ] Checking buffer... ")
