@@ -111,11 +111,11 @@ local function isStorageCapableEmpty(storageReference)
 end
 
 local ecoSleepDuration = 10            -- seconds
-local inertSleepDuration = 1           -- seconds
-local inertAttempts = 5                -- attempts
+local inertStateSleepDuration = 1           -- seconds
+local inertStateAttempts = 5                -- attempts
 local workingSleepDuration = 0.25      -- seconds
-local betweenstateSleepDuration = 0.75 -- seconds
-local betweenstateAttempts = 10        -- attempts
+local betweenStateSleepDuration = 0.75 -- seconds
+local betweenStateAttempts = 10        -- attempts
 
 local sleepManager = {
     ecoModeCounter = 0,
@@ -126,7 +126,7 @@ local sleepManager = {
     }
 }
 
-function sleepManager:isInert()
+function sleepManager:intertStateCountdown()
     if not self.ecoModeCounter > 0 then
         return false
     end
@@ -135,14 +135,14 @@ function sleepManager:isInert()
 end
 
 function sleepManager:rechargeBetweenstate()
-    self.betweenstateModeCounter = betweenstateAttempts
+    self.betweenstateModeCounter = betweenStateAttempts
 end
 
 function sleepManager:rechargeEco()
-    self.ecoModeCounter = inertAttempts
+    self.ecoModeCounter = inertStateAttempts
 end
 
-function sleepManager:isBetweenstate()
+function sleepManager:betweenStateCountdown()
     if not self.betweenstateModeCounter > 0 then
         return false
     end
@@ -155,18 +155,39 @@ function sleepManager:updateBufferState(isEmpty, isRecipeMatched)
     self.observableStates.isRecipeMatched = isRecipeMatched
 end
 
+-- function sleepManager:sleep()
+--     if self.observableStates.isEmpty or not self.betweenstateModeCounter > 0 then
+--         os.sleep(self:isInert() and inertSleepDuration or ecoSleepDuration)
+--         if self.observableStates.isRecipeMatched then
+--             self:rechargeBetweenstate()
+--         end
+--     elseif not self.observableStates.isRecipeMatched then
+--         self:isBetweenstate()
+--         os.sleep(betweenstateSleepDuration)
+--     else
+--         self:rechargeEco()
+--         os.sleep(workingSleepDuration)
+--     end
+-- end
+
+
+-- new manager with raw incomplete logic, staged in git for future complete
 function sleepManager:sleep()
-    if self.observableStates.isEmpty or not self.betweenstateModeCounter > 0 then
-        os.sleep(self:isInert() and inertSleepDuration or ecoSleepDuration)
-        if self.observableStates.isRecipeMatched then
+    local isEmpty = self.observableStates.isEmpty
+    local isRecipeMatched = self.observableStates.isRecipeMatched
+    if not isEmpty and isRecipeMatched then
+        os.sleep(workingSleepDuration)
+    elseif not isEmpty and self:betweenStateCountdown() then
+        os.sleep(betweenStateSleepDuration)
+    elseif self:intertStateCountdown() then --note: does not matter empty or not, inert is always a pre-step before the eco
+        os.sleep(inertStateSleepDuration)
+    elseif not isEmpty then
+        os.sleep(ecoSleepDuration)
+        if isRecipeMatched then
             self:rechargeBetweenstate()
         end
-    elseif not self.observableStates.isRecipeMatched then
-        self:isBetweenstate()
-        os.sleep(betweenstateSleepDuration)
     else
-        self:rechargeEco()
-        os.sleep(workingSleepDuration)
+        os.sleep(ecoSleepDuration)
     end
 end
 
