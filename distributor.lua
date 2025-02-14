@@ -267,18 +267,17 @@ function capturingBufferManager:capture()
         local items = self.bufferData.items
         for bufferSlot, itemData in pairs(items) do
             if itemData.rawName == rawName then
-                local referencedItem = {
-                    rawName = itemData.rawName,
-                    count = itemData.count,
+                local itemLink = {
+                    item = itemData,
                 }
-                function referencedItem:decrement()
-                    self.count = self.count - 1
-                    if self.count == 0 then
+                function itemLink:decrement()
+                    self.item.count = self.item.count - 1
+                    if self.item.count == 0 then
                         items[bufferSlot] = nil
                     end
                 end
 
-                return referencedItem
+                return itemLink
             end
         end
         return nil
@@ -304,7 +303,7 @@ while true do
             -- decrementation test
             local foundItem = capturedBuffer:seekItem(layout[1])
             assert(foundItem ~= nil, "Check seek method, it's broken!")
-            for step = 1, foundItem.count do
+            for step = 1, foundItem.count+1 do
                 print(textutils.serialise(capturedBuffer.bufferData.items))
                 foundItem:decrement()
             end
