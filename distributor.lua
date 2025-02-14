@@ -160,19 +160,23 @@ function sleepManager:sleep()
     local isRecipeMatched = self.observableStates.isRecipeMatched
     if not isEmpty and self.betweenstateModeCounter > 0 then
         if isRecipeMatched then
+            print("State: Working")
             os.sleep(workingSleepDuration)
             if self.betweenstateModeCounter <= 0 then
                 self:rechargeBetweenState()
             end
         elseif self:betweenStateCountdown() then
+            print("State: Between State")
             os.sleep(betweenStateSleepDuration)
         end
         if self.inertModeCounter <= 0 then
             self:rechargeInertState()
         end
     elseif self:inertStateCountdown() then
+        print("State: Inert State")
         os.sleep(inertStateSleepDuration)
     else
+        print("State: Eco Mode")
         os.sleep(ecoSleepDuration)
         if isRecipeMatched then
             self:rechargeBetweenState()
