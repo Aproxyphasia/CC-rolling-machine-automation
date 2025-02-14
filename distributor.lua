@@ -111,47 +111,63 @@ local function isStorageCapableEmpty(storageReference)
 end
 
 local ecoSleepDuration = 10         -- seconds
-local intermediateSleepDuration = 1 -- seconds
-local intermediateSleepAttempts = 5 -- attempts
-local workingSleepDuration = 0.5    -- seconds
+local inertSleepDuration = 1             -- seconds
+local inertAttempts = 5             -- attempts
+local workingSleepDuration = 0.25   -- seconds
+local betweenstateSleepDuration = 0.75   -- seconds
+local betweenstateAttempts = 10     -- attempts 
 
 local sleepManager = {
     ecoModeCounter = 0,
-    isActive = false,
-    storageReference = devices.buffer.ref
+    betweenstateModeCounter = 0,
+    observableStates = {
+        isEmpty = true,
+        isRecipeMatched = false,
+    }
 }
 
-function sleepManager:activateWorkingMode()
-    self.ecoModeCounter = intermediateSleepAttempts
-    self.isActive = true
-end
-
-function sleepManager:activateEcoMode()
-    self.isActive = false
-end
-
-function sleepManager:decrementEcoCounter()
+function sleepManager:isInert()
+    if not self.ecoModeCounter > 0 then
+        return false
+    end
     self.ecoModeCounter = self.ecoModeCounter - 1
+    return true
+end
+
+function sleepManager:rechargeBetweenstate()
+    self.betweenstateModeCounter = betweenstateAttempts
+end
+
+function sleepManager:rechargeEco()
+    self.ecoModeCounter = inertAttempts
+end
+
+function sleepManager:isBetweenstate()
+    if not self.betweenstateModeCounter > 0 then
+        return false
+    end
+    self.betweenstateModeCounter = self.betweenstateModeCounter - 1
+    return true
+end
+
+function sleepManager:updateBufferState(isEmpty, isRecipeMatched)
+    self.observableStates.isEmpty = isEmpty
+    self.observableStates.isRecipeMatched = isRecipeMatched
 end
 
 function sleepManager:sleep()
-    if isStorageCapableEmpty(self.storageReference) then
-        if self.ecoModeCounter <= 0 then
-            self:activateEcoMode()
-            print("Entering eco mode. Sleeping for " .. ecoSleepDuration .. " seconds.")
-            os.sleep(ecoSleepDuration)
-        else
-            self:decrementEcoCounter()
-            print("Intermediate sleep. Counter: " ..
-                self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
-            os.sleep(intermediateSleepDuration)
+    if self.observableStates.isEmpty or self.betweenstateModeCounter > 0 then
+        os.sleep(self:isInert() and inertSleepDuration or ecoSleepDuration)
+        if self.observableStates.isRecipeMatched then
+            self:rechargeBetweenstate()
         end
+    elseif not self.observableStates.isRecipeMatched then
+        self:isBetweenstate()
+        os.sleep(betweenstateSleepDuration)
     else
-        self:activateWorkingMode()
-        print("Working mode. Sleeping for " .. workingSleepDuration .. " seconds.")
+        self:rechargeEco()
         os.sleep(workingSleepDuration)
     end
-    return self.isActive
 end
 
 local capturingBufferManager = {
