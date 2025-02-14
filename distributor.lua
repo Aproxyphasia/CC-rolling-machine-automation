@@ -305,11 +305,11 @@ while true do
             local foundItem = capturedBuffer:seekItem(layout[1])
             assert(foundItem ~= nil, "Check seek method, it's broken!")
             for step = 1, foundItem.count do
-                print(capturedBuffer.bufferData.items)
+                print(textutils.serialise(capturedBuffer.bufferData.items))
                 foundItem:decrement()
             end
             print("Final print")
-            print(capturedBuffer.bufferData.items)
+            print(textutils.serialise(capturedBuffer.bufferData.items))
         end
     end
 end
