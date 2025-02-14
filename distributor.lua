@@ -1,3 +1,5 @@
+-- TODO: Improve speed. Capturing buffer takes too much time
+
 LOGGING = false
 ECHO = false
 
