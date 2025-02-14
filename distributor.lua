@@ -307,8 +307,8 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
             assert(transfered ~= 0, "Can't transfer item"..bufferItemLink.item.rawName)
             bufferItemLink:decrement()
         end
-        return definedMachineSlots
     end
+    return definedMachineSlots
 end
 
 while true do
