@@ -110,12 +110,12 @@ local function isStorageCapableEmpty(storageReference)
     return getTableLength(storageReference.list()) == 0
 end
 
-local ecoSleepDuration = 10         -- seconds
-local inertSleepDuration = 1             -- seconds
-local inertAttempts = 5             -- attempts
-local workingSleepDuration = 0.25   -- seconds
-local betweenstateSleepDuration = 0.75   -- seconds
-local betweenstateAttempts = 10     -- attempts 
+local ecoSleepDuration = 10            -- seconds
+local inertSleepDuration = 1           -- seconds
+local inertAttempts = 5                -- attempts
+local workingSleepDuration = 0.25      -- seconds
+local betweenstateSleepDuration = 0.75 -- seconds
+local betweenstateAttempts = 10        -- attempts
 
 local sleepManager = {
     ecoModeCounter = 0,
@@ -214,6 +214,7 @@ end
 
 local rollingMachineManager = {
     machineReference = devices.rollingMachine.ref,
+    previousRecipe = nil,
 }
 function rollingMachineManager:loadSlotManagers(receipeLayout)
     local definedMachineSlots = {}
@@ -225,9 +226,10 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
         function definedSlot:receive(capturedBM)
             local bufferItemLink = capturedBM:seekItem(itemRawName)
             local transfered = devicePullItems(ref, capturedBM.bufferSide, bufferItemLink.slot, 1, machineSlot)
-            assert(transfered ~= 0, "Can't transfer item"..bufferItemLink.item.rawName)
+            assert(transfered ~= 0, "Can't transfer item" .. bufferItemLink.item.rawName)
             bufferItemLink:decrement()
         end
+
         definedMachineSlots[machineSlot] = definedSlot
     end
     return definedMachineSlots
@@ -243,10 +245,12 @@ while true do
             capturedBuffer.bufferData.quantities
         )
         if recipeName then
-            local layout = recipesData.layouts[recipeName]
-            local definedSlots = rollingMachineManager:loadSlotManagers(layout)
-            for _, slotManager in pairs(definedSlots) do
-                slotManager:receive(capturedBuffer)
+            if rollingMachineManager.previousRecipe == recipeName or isStorageCapableEmpty(devices.rollingMachine.ref) then
+                local layout = recipesData.layouts[recipeName]
+                local definedSlots = rollingMachineManager:loadSlotManagers(layout)
+                for _, slotManager in pairs(definedSlots) do
+                    slotManager:receive(capturedBuffer)
+                end
             end
             isRecipeMatched = true
         end
