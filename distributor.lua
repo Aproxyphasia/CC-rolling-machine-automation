@@ -155,23 +155,6 @@ function sleepManager:updateBufferState(isEmpty, isRecipeMatched)
     self.observableStates.isRecipeMatched = isRecipeMatched
 end
 
--- function sleepManager:sleep()
---     if self.observableStates.isEmpty or not self.betweenstateModeCounter > 0 then
---         os.sleep(self:isInert() and inertSleepDuration or ecoSleepDuration)
---         if self.observableStates.isRecipeMatched then
---             self:rechargeBetweenstate()
---         end
---     elseif not self.observableStates.isRecipeMatched then
---         self:isBetweenstate()
---         os.sleep(betweenstateSleepDuration)
---     else
---         self:rechargeEco()
---         os.sleep(workingSleepDuration)
---     end
--- end
-
-
--- new manager with raw incomplete logic, staged in git for future complete
 function sleepManager:sleep()
     local isEmpty = self.observableStates.isEmpty
     local isRecipeMatched = self.observableStates.isRecipeMatched
