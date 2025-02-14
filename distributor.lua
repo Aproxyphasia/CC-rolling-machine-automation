@@ -111,14 +111,14 @@ local function isStorageCapableEmpty(storageReference)
 end
 
 local ecoSleepDuration = 10            -- seconds
-local inertStateSleepDuration = 1           -- seconds
-local inertStateAttempts = 5                -- attempts
+local inertStateSleepDuration = 1      -- seconds
+local inertStateAttempts = 5           -- attempts
 local workingSleepDuration = 0.25      -- seconds
 local betweenStateSleepDuration = 0.75 -- seconds
 local betweenStateAttempts = 10        -- attempts
 
 local sleepManager = {
-    ecoModeCounter = 0,
+    inertModeCounter = 0,
     betweenstateModeCounter = 0,
     observableStates = {
         isEmpty = true,
@@ -126,20 +126,20 @@ local sleepManager = {
     }
 }
 
-function sleepManager:intertStateCountdown()
-    if not self.ecoModeCounter > 0 then
+function sleepManager:inertStateCountdown()
+    if not self.inertModeCounter > 0 then
         return false
     end
-    self.ecoModeCounter = self.ecoModeCounter - 1
+    self.inertModeCounter = self.inertModeCounter - 1
     return true
 end
 
-function sleepManager:rechargeBetweenstate()
+function sleepManager:rechargeBetweenState()
     self.betweenstateModeCounter = betweenStateAttempts
 end
 
-function sleepManager:rechargeEco()
-    self.ecoModeCounter = inertStateAttempts
+function sleepManager:rechargeInertState()
+    self.inertModeCounter = inertStateAttempts
 end
 
 function sleepManager:betweenStateCountdown()
@@ -175,19 +175,25 @@ end
 function sleepManager:sleep()
     local isEmpty = self.observableStates.isEmpty
     local isRecipeMatched = self.observableStates.isRecipeMatched
-    if not isEmpty and isRecipeMatched then
-        os.sleep(workingSleepDuration)
-    elseif not isEmpty and self:betweenStateCountdown() then
-        os.sleep(betweenStateSleepDuration)
-    elseif self:intertStateCountdown() then --note: does not matter empty or not, inert is always a pre-step before the eco
-        os.sleep(inertStateSleepDuration)
-    elseif not isEmpty then
-        os.sleep(ecoSleepDuration)
+    if not isEmpty and self.betweenstateModeCounter > 0 then
         if isRecipeMatched then
-            self:rechargeBetweenstate()
+            os.sleep(workingSleepDuration)
+            if self.betweenstateModeCounter <= 0 then
+                self:rechargeBetweenState()
+            end
+        elseif self:betweenStateCountdown() then
+            os.sleep(betweenStateSleepDuration)
         end
+        if self.inertModeCounter <= 0 then
+            self:rechargeInertState()
+        end
+    elseif self:inertStateCountdown() then
+        os.sleep(inertStateSleepDuration)
     else
         os.sleep(ecoSleepDuration)
+        if isRecipeMatched then
+            self:rechargeBetweenState()
+        end
     end
 end
 
@@ -256,8 +262,8 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     return definedMachineSlots
 end
 
-sleepManager:rechargeEco()
-sleepManager:rechargeBetweenstate()
+sleepManager:rechargeInertState()
+sleepManager:rechargeBetweenState()
 
 while true do
     local isEmpty = isStorageCapableEmpty(devices.buffer.ref)
