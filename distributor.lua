@@ -156,7 +156,7 @@ function sleepManager:updateBufferState(isEmpty, isRecipeMatched)
 end
 
 function sleepManager:sleep()
-    if self.observableStates.isEmpty or self.betweenstateModeCounter > 0 then
+    if self.observableStates.isEmpty or not self.betweenstateModeCounter > 0 then
         os.sleep(self:isInert() and inertSleepDuration or ecoSleepDuration)
         if self.observableStates.isRecipeMatched then
             self:rechargeBetweenstate()
@@ -234,6 +234,9 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     end
     return definedMachineSlots
 end
+
+sleepManager:rechargeEco()
+sleepManager:rechargeBetweenstate()
 
 while true do
     local isEmpty = isStorageCapableEmpty(devices.buffer.ref)
