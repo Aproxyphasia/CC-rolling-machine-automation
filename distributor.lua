@@ -188,6 +188,11 @@ function capturingBufferManager:capture()
 end
 
 local function devicePullItems(deviceReference, fromSide, fromSlot, count, toSlot)
+    assert(deviceReference, "Error: Device reference is nil.")
+    assert(fromSide, "Error: Source side is nil.")
+    assert(fromSlot, "Error: Source slot is nil.")
+    assert(count, "Error: Item count is nil.")
+    assert(toSlot, "Error: Destination slot is nil.")
     return deviceReference.pullItems(fromSide, fromSlot, count, toSlot)
 end
 
