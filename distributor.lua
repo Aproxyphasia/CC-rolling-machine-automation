@@ -280,7 +280,7 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
         }
         function definedSlot:receive(capturedBM)
             local bufferItemLink = capturedBM:seekItem(itemRawName)
-            definedSlot.itemData = bufferItemLink.item
+            self.itemData = bufferItemLink.item
             local transfered = devicePullItems(ref, capturedBM.bufferSide, bufferItemLink.slot, 1, machineSlot)
             assert(transfered ~= 0, "Can't transfer item" .. bufferItemLink.item.rawName)
             bufferItemLink:decrement()
@@ -306,6 +306,7 @@ while true do
     if not isEmpty then
         _ = LOGGING and print("[ LOG ] [ MainLoop ] Capturing buffer... ")
         local capturedBuffer = capturingBufferManager:capture()
+
         _ = LOGGING and print("[ LOG ] [ MainLoop ] Buffer captured.")
 
         _ = LOGGING and print("[ LOG ] [ MainLoop ] Fetching suitable recipe... ")
@@ -337,9 +338,11 @@ while true do
                 _ = LOGGING and print("[ LOG ] [ MainLoop ] Loading slot managers...")
                 local definedSlots = rollingMachineManager:loadSlotManagers(layout)
                 for slot, slotManager in pairs(definedSlots) do
-                    _ = LOGGING and print("[ LOG ] [ MainLoop ] Receiving item \""..slotManager.itemData.rawName.."\" to slot "..slot)
                     slotManager:receive(capturedBuffer)
+                    _ = LOGGING and print("[ LOG ] [ MainLoop ] Received item \""..slotManager.itemData.rawName.."\" to slot "..slot)
+
                 end
+
                 _ = LOGGING and print("[ LOG ] [ MainLoop ] Recipe loaded.")
             end
             isRecipeMatched = true
