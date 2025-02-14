@@ -164,7 +164,7 @@ print("Recipes and their requirements loaded successfully.")
 
 
 -- Check the chest for its content
-local function getBufferContentData(chestReference)
+local function fetchBufferData(chestReference)
     local bufferRawContent = chestReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
@@ -189,6 +189,15 @@ local function isRecipeSuitable(recipeQuantities, bufferQuantities)
         end
     end
     return true
+end
+
+local function fetchSuitableRecipeName(allRecipesQuantities, bufferQuantities)
+    for recipeName, recipeQuantities in pairs(allRecipesQuantities) do
+        if isRecipeSuitable(recipeQuantities, bufferQuantities) then
+            return recipeName
+        end
+    end
+    return nil
 end
 
 local ecoSleepTime = 10 --seconds
@@ -234,9 +243,15 @@ function sleepingManager:sleep()
         self:enableWorking()
          sleep(workingSleepTime)
     end
+    return self.isWorking
 end
 
+
+
 while true do
-    sleepingManager:sleep()
+    local isWorking = sleepingManager:sleep()
+    if isWorking then
+        local bufferData = fetchBufferData()
+    end
 end
 
