@@ -243,7 +243,7 @@ function sleepManager:sleep()
         else
             self:decrementEcoCounter()
             print("Intermediate sleep. Counter: " ..
-            self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
+                self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
             os.sleep(intermediateSleepDuration)
         end
     else
@@ -268,6 +268,7 @@ function capturingBufferManager:capture()
         for bufferSlot, itemData in pairs(items) do
             if itemData.rawName == rawName then
                 local itemLink = {
+                    slot = bufferSlot,
                     item = itemData,
                 }
                 function itemLink:decrement()
@@ -286,9 +287,28 @@ function capturingBufferManager:capture()
     return capturedBufferManager
 end
 
+local function devicePullItems(deviceReference, fromSide, fromSlot, count, toSlot)
+    return deviceReference.pullItems(fromSide, fromSlot, count, toSlot)
+end
+
 local rollingMachineManager = {
     machineReference = devices.rollingMachine.ref,
 }
+function rollingMachineManager:loadSlotManagers(receipeLayout)
+    local definedMachineSlots = {}
+    local ref = self.machineReference
+    for machineSlot, itemRawName in pairs(receipeLayout) do
+        definedMachineSlots[machineSlot] = {
+            itemData = nil,
+        }
+        function definedMachineSlots:receive(capturedBM)
+            local bufferItemLink = capturedBM:seekItem(itemRawName)
+            local transfered = devicePullItems(ref, capturedBM.side, bufferItemLink.slot, 1, machineSlot)
+            assert(transfered ~= 0, "Can't transfer item"..bufferItemLink.item.rawName)
+            bufferItemLink:decrement()
+        end
+    end
+end
 
 while true do
     local isWorking = sleepManager:sleep()
@@ -300,7 +320,7 @@ while true do
         )
         if recipeName then
             local layout = recipesData.layouts[recipeName]
-            
+        
         end
     end
 end
