@@ -257,8 +257,9 @@ end
 
 while true do
     local isWorking = sleepManager:sleep()
-    -- if isWorking then
-    --     local bufferData = fetchBufferData()
-    -- end
+    if isWorking then
+        local bufferData = fetchBufferData()
+        print(fetchSuitableRecipeName(recipesData.quantities, bufferData.quantities))
+    end
 end
 
