@@ -298,15 +298,17 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     local definedMachineSlots = {}
     local ref = self.machineReference
     for machineSlot, itemRawName in pairs(receipeLayout) do
-        definedMachineSlots[machineSlot] = {
+        -- fixed receive to belong to the slot instead of slots table
+        local definedSlot = {
             itemData = nil,
         }
-        function definedMachineSlots:receive(capturedBM)
+        function definedSlot:receive(capturedBM)
             local bufferItemLink = capturedBM:seekItem(itemRawName)
             local transfered = devicePullItems(ref, capturedBM.side, bufferItemLink.slot, 1, machineSlot)
             assert(transfered ~= 0, "Can't transfer item"..bufferItemLink.item.rawName)
             bufferItemLink:decrement()
         end
+        definedMachineSlots[machineSlot] = definedSlot
     end
     return definedMachineSlots
 end
