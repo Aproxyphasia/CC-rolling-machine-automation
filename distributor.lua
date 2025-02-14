@@ -181,8 +181,8 @@ local function getBufferContentData(chestReference)
 end
 
 -- Check if any recipe is suitable for the chest content
-local function isRecipeSuitable(recipesQuantities, bufferQuantities)
-    for rawName, requiredQuantity in pairs(recipesQuantities) do
+local function isRecipeSuitable(recipeQuantities, bufferQuantities)
+    for rawName, requiredQuantity in pairs(recipeQuantities) do
         local availableQuantity = bufferQuantities[rawName]
         if not availableQuantity or availableQuantity % requiredQuantity ~= 0 then
             return false
@@ -192,6 +192,8 @@ local function isRecipeSuitable(recipesQuantities, bufferQuantities)
 end
 
 local ecoSleepTime = 10 --seconds
+local intermediateSleepTime = 1 --seconds
+local intermediateSleepTries = 5 -- attempts
 local workingSleepTime = 0.5 --seconds
 
 local function getTableLength(table)
@@ -200,23 +202,41 @@ local function getTableLength(table)
     return count
 end
 
-local function isBufferEmpty(bufferReference)
-    return getTableLength(bufferReference.list()) == 0
+local function isStorageCapableEmpty(storageReference)
+    return getTableLength(storageReference.list()) == 0
+end
+
+local sleepingManager = {
+    beforeEcoCounter = 0,
+    isWorking = false,
+    observableStorageReference = devices.buffer.ref
+}
+function sleepingManager:enableWorking()
+    self.beforeEcoCounter = intermediateSleepTries
+    self.isWorking = true
+end
+function sleepingManager:enableEco()
+    self.isWorking = false
+end
+function sleepingManager:countdownToEco()
+    self.beforeEcoCounter = self.beforeEcoCounter - 1
+end
+function sleepingManager:sleep()
+    if isStorageCapableEmpty(self.observableStorageReference) then
+        if self.beforeEcoCounter <= 0 then
+            self:enableEco()
+            sleep(ecoSleepTime)
+        else
+            self:countdownToEco()
+            sleep(intermediateSleepTime)
+        end
+    else
+        self:enableWorking()
+         sleep(workingSleepTime)
+    end
 end
 
 while true do
-    if isBufferEmpty(devices.buffer.ref) then
-        sleep(ecoSleepTime)
-        print(1)
-    else
-        sleep(workingSleepTime)
-
-        local bufferData = getBufferContentData(devices.buffer.ref)
-        local bufferQuantities = bufferData.quantities
-        print("Buffer content:");
-        for rawName, quantity in pairs(bufferQuantities) do
-            print(rawName .. ": " .. quantity)
-        end
-    end
+    sleepingManager:sleep()
 end
 
