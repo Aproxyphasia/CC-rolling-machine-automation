@@ -1,5 +1,5 @@
-LOGGING = true
-ECHO = true
+LOGGING = false
+ECHO = false
 
 _ = ECHO and io.write("Fetching peripherals... ")
 local peripherals = peripheral.getNames()
@@ -158,8 +158,7 @@ local sleepManager = {
 
 
 function sleepManager:inertStateCountdown()
-    print(sleepManager.inertModeCounter)
-    if not self.inertModeCounter > 0 then
+    if not (self.inertModeCounter > 0) then
         return false
     end
     self.inertModeCounter = self.inertModeCounter - 1
@@ -175,7 +174,7 @@ function sleepManager:rechargeInertState()
 end
 
 function sleepManager:betweenStateCountdown()
-    if not self.betweenstateModeCounter > 0 then
+    if not (self.betweenstateModeCounter > 0) then
         return false
     end
     self.betweenstateModeCounter = self.betweenstateModeCounter - 1
