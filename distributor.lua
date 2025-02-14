@@ -200,11 +200,6 @@ local function fetchSuitableRecipeName(allRecipesQuantities, bufferQuantities)
     return nil
 end
 
-local ecoSleepTime = 10 --seconds
-local intermediateSleepTime = 1 --seconds
-local intermediateSleepTries = 5 -- attempts
-local workingSleepTime = 0.5 --seconds
-
 local function getTableLength(table)
     local count = 0
     for _ in pairs(table) do count = count + 1 end
@@ -215,43 +210,55 @@ local function isStorageCapableEmpty(storageReference)
     return getTableLength(storageReference.list()) == 0
 end
 
-local sleepingManager = {
-    beforeEcoCounter = 0,
-    isWorking = false,
-    observableStorageReference = devices.buffer.ref
+local ecoSleepDuration = 10 -- seconds
+local intermediateSleepDuration = 1 -- seconds
+local intermediateSleepAttempts = 5 -- attempts
+local workingSleepDuration = 0.5 -- seconds
+
+local sleepManager = {
+    ecoModeCounter = 0,
+    isActive = false,
+    storageReference = devices.buffer.ref
 }
-function sleepingManager:enableWorking()
-    self.beforeEcoCounter = intermediateSleepTries
-    self.isWorking = true
+
+function sleepManager:activateWorkingMode()
+    self.ecoModeCounter = intermediateSleepAttempts
+    self.isActive = true
 end
-function sleepingManager:enableEco()
-    self.isWorking = false
+
+function sleepManager:activateEcoMode()
+    self.isActive = false
 end
-function sleepingManager:countdownToEco()
-    self.beforeEcoCounter = self.beforeEcoCounter - 1
+
+function sleepManager:decrementEcoCounter()
+    self.ecoModeCounter = self.ecoModeCounter - 1
 end
-function sleepingManager:sleep()
-    if isStorageCapableEmpty(self.observableStorageReference) then
-        if self.beforeEcoCounter <= 0 then
-            self:enableEco()
-            sleep(ecoSleepTime)
+
+function sleepManager:sleep()
+    if isStorageCapableEmpty(self.storageReference) then
+        if self.ecoModeCounter <= 0 then
+            self:activateEcoMode()
+            print("Entering eco mode. Sleeping for " .. ecoSleepDuration .. " seconds.")
+            sleep(ecoSleepDuration)
         else
-            self:countdownToEco()
-            sleep(intermediateSleepTime)
+            self:decrementEcoCounter()
+            print("Intermediate sleep. Counter: " .. self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
+            sleep(intermediateSleepDuration)
         end
     else
-        self:enableWorking()
-         sleep(workingSleepTime)
+        self:activateWorkingMode()
+        print("Working mode. Sleeping for " .. workingSleepDuration .. " seconds.")
+        sleep(workingSleepDuration)
     end
-    return self.isWorking
+    return self.isActive
 end
 
 
 
 while true do
     local isWorking = sleepingManager:sleep()
-    if isWorking then
-        local bufferData = fetchBufferData()
-    end
+    -- if isWorking then
+    --     local bufferData = fetchBufferData()
+    -- end
 end
 
