@@ -165,6 +165,8 @@ print("Recipes and their requirements loaded successfully.")
 
 -- Check the chest for its content
 local function fetchBufferData(chestReference)
+    -- log due to nil
+    print(chestReference)
     local bufferRawContent = chestReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
