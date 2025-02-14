@@ -165,8 +165,6 @@ print("Recipes and their requirements loaded successfully.")
 
 -- Check the chest for its content
 local function fetchBufferData(chestReference)
-    -- log due to nil
-    print(chestReference)
     local bufferRawContent = chestReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
@@ -261,7 +259,7 @@ while true do
     local isWorking = sleepManager:sleep()
     if isWorking then
         local bufferData = fetchBufferData(devices.buffer.ref)
-        print(fetchSuitableRecipeName(recipesData.quantities, bufferData.quantities))
+        -- fetch went well
     end
 end
 
