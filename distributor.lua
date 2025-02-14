@@ -141,8 +141,8 @@ _ = ECHO and print("[ Main ] Stage started")
 -- Sleep manager
 
 local ecoSleepDuration = 10            -- seconds
-local inertStateSleepDuration = 1      -- seconds
-local inertStateAttempts = 5           -- attempts
+local inertStateSleepDuration = 0.36      -- seconds
+local inertStateAttempts = 20           -- attempts
 local workingSleepDuration = 0.1     -- seconds
 local betweenStateSleepDuration = 0.75 -- seconds
 local betweenStateAttempts = 10        -- attempts
