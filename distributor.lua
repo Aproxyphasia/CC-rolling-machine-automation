@@ -239,16 +239,16 @@ function sleepManager:sleep()
         if self.ecoModeCounter <= 0 then
             self:activateEcoMode()
             print("Entering eco mode. Sleeping for " .. ecoSleepDuration .. " seconds.")
-            sleep(ecoSleepDuration)
+            os.sleep(ecoSleepDuration)
         else
             self:decrementEcoCounter()
             print("Intermediate sleep. Counter: " .. self.ecoModeCounter .. ". Sleeping for " .. intermediateSleepDuration .. " seconds.")
-            sleep(intermediateSleepDuration)
+            os.sleep(intermediateSleepDuration)
         end
     else
         self:activateWorkingMode()
         print("Working mode. Sleeping for " .. workingSleepDuration .. " seconds.")
-        sleep(workingSleepDuration)
+        os.sleep(workingSleepDuration)
     end
     return self.isActive
 end
@@ -256,7 +256,7 @@ end
 
 
 while true do
-    local isWorking = sleepingManager:sleep()
+    local isWorking = sleepManager:sleep()
     -- if isWorking then
     --     local bufferData = fetchBufferData()
     -- end
