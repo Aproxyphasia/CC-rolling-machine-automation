@@ -280,6 +280,7 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
         }
         function definedSlot:receive(capturedBM)
             local bufferItemLink = capturedBM:seekItem(itemRawName)
+            definedSlot.itemData = bufferItemLink.item
             local transfered = devicePullItems(ref, capturedBM.bufferSide, bufferItemLink.slot, 1, machineSlot)
             assert(transfered ~= 0, "Can't transfer item" .. bufferItemLink.item.rawName)
             bufferItemLink:decrement()
