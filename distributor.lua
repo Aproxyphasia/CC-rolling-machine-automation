@@ -303,7 +303,7 @@ while true do
             -- decrementation test
             local foundItemLink = capturedBuffer:seekItem(layout[1])
             assert(foundItemLink ~= nil, "Check seek method, it's broken!")
-            for step = 1, foundItemLink.item.count+1 do
+            for step = 1, foundItemLink.item.count do
                 print(textutils.serialise(capturedBuffer.bufferData.items))
                 foundItemLink:decrement()
             end
