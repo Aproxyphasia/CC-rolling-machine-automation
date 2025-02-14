@@ -158,6 +158,7 @@ local sleepManager = {
 
 
 function sleepManager:inertStateCountdown()
+    print(sleepManager.inertModeCounter)
     if not self.inertModeCounter > 0 then
         return false
     end
