@@ -219,7 +219,6 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
     local definedMachineSlots = {}
     local ref = self.machineReference
     for machineSlot, itemRawName in pairs(receipeLayout) do
-        -- fixed receive to belong to the slot instead of slots table
         local definedSlot = {
             itemData = nil,
         }
@@ -235,8 +234,9 @@ function rollingMachineManager:loadSlotManagers(receipeLayout)
 end
 
 while true do
-    local isWorking = sleepManager:sleep()
-    if isWorking then
+    local isEmpty = isStorageCapableEmpty(devices.buffer.ref)
+    local isRecipeMatched = false
+    if not isEmpty then
         local capturedBuffer = capturingBufferManager:capture()
         local recipeName = fetchSuitableRecipeName(
             recipesData.quantities,
@@ -248,6 +248,9 @@ while true do
             for _, slotManager in pairs(definedSlots) do
                 slotManager:receive(capturedBuffer)
             end
+            isRecipeMatched = true
         end
     end
+    sleepManager:updateBufferState(isEmpty, isRecipeMatched)
+    sleepManager:sleep()
 end
