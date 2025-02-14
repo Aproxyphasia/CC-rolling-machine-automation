@@ -164,13 +164,13 @@ print("Recipes and their requirements loaded successfully.")
 
 
 -- Check the chest for its content
-local function fetchBufferData(chestReference)
-    local bufferRawContent = chestReference.list()
+local function fetchBufferData(bufferReference)
+    local bufferRawContent = bufferReference.list()
     local bufferItems = {}
     local bufferQuantities = {}
     
     for slot, item in pairs(bufferRawContent) do
-        local item = chestReference.getItem(slot)
+        local item = bufferReference.getItem(slot)
         local rawName = item.getMetadata().rawName
         local count = item.getMetadata().count
         bufferItems[slot] = { count = count, rawName = rawName }
@@ -259,7 +259,7 @@ while true do
     local isWorking = sleepManager:sleep()
     if isWorking then
         local bufferData = fetchBufferData(devices.buffer.ref)
-        -- fetch went well
+        
     end
 end
 
