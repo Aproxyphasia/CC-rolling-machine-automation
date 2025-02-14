@@ -342,7 +342,8 @@ while true do
                     _ = LOGGING and print("[ LOG ] [ MainLoop ] Received item \""..slotManager.itemData.rawName.."\" to slot "..slot)
 
                 end
-
+                rollingMachineManager.previousRecipe = recipeName
+                
                 _ = LOGGING and print("[ LOG ] [ MainLoop ] Recipe loaded.")
             end
             isRecipeMatched = true
